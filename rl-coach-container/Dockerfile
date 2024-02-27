@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:23.04
 
 # install docker
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -9,7 +9,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     gnupg-agent \
     software-properties-common \
     python3 \
-    python3-pip
+    python3-pip \
+    python3.11-venv
+
 RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add - && \
 	 add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 RUN apt-get update && apt-get install --no-install-recommends -y docker-ce-cli && apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -23,15 +25,22 @@ COPY rl-coach-container/files/config.yaml /root/.sagemaker/config.yaml
 # RUN mkdir -p /deepracer && mkdir -p /deepracer/rl_coach && mkdir -p /deepracer/sagemaker-python-sdk
 WORKDIR /deepracer
 
+RUN python3 -m venv .venv
 # install dependencies
+
 RUN pip install --no-cache-dir -U "sagemaker<2" "protobuf<3.20" awscli ipython pandas "pyyaml==5.4.1"
 
+RUN .venv/bin/pip install --no-cache-dir -U "sagemaker<2" "protobuf<3.20" awscli ipython "pyyaml==5.4.1"
+
+
+RUN sed -i 's/yaml.load/yaml.safe_load/g' .venv/lib/python3.11/site-packages/sagemaker/local/local_session.py
+RUN sed -i 's/collections.Hashable/collections.abc.Hashable/g' .venv/lib/python3.11/site-packages/yaml/constructor.py
 ADD rl-coach-container/files/common /deepracer/common
 ADD robomaker-container/bundle/markov /deepracer/markov
 COPY rl-coach-container/files/rl_deepracer_coach_robomaker.py /deepracer/
 
 # set command
-CMD (python3 rl_deepracer_coach_robomaker.py)
+CMD (.venv/bin/python3 rl_deepracer_coach_robomaker.py)
 
 # Versioning
 ARG IMG_VERSION
