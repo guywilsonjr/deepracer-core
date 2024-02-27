@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y docker-ce-cli &
 RUN curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose
 
 # create sagemaker configuration
-RUN mkdir -p /root/.sagemaker /robo/container 
+RUN mkdir -p /root/.sagemaker /robo/container
 COPY rl-coach-container/files/config.yaml /root/.sagemaker/config.yaml
 
 # add required deepracer directories to the container
